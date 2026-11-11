@@ -14,13 +14,9 @@ def f(t, y):
 
 y_data = [y_curr]
 t_data = [t_curr]
-while t_curr <= t_end:
+while t_curr < t_end:
     if t_curr + h_curr > t_end:
         h_curr = t_end - t_curr
-        y_curr = rk23.step_star(t_curr, h_curr, y_curr, f)
-        y_data.append(y_curr)
-        t_data.append(t_end)
-        break
     h_new, y_new, success = rk23.iterate(t_curr, h_curr, y_curr, eps_tol, f, lam)
     if success:
         y_curr = y_new
