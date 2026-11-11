@@ -8,7 +8,6 @@ c = np.array([0.0 ,1.0 ,0.5], np.double)
 eps_tol = 1e-4
 
 
-
 def f(t, y):
     return y
 
@@ -24,6 +23,20 @@ def get_k(A, b, c, hn, tn, yn, func):
         k[:, i] = func(tn+c[i]*hn, yn + hn*Ki)
     return k #works   
 
+def step(tn, hn, yn, func):
+    k = get_k(A, b, c, hn, tn, yn, func)
+    n_func = len(yn)
+    n_coeff = k.shape[1]
+    psi = np.zeros(n_func)
+    for i in range(n_coeff):
+        psi += b[i]*k[:, i]
+    return yn + hn*psi #works
 
-k_coeff = get_k(A, b, c, 0.05, 0, [2.5], f)
-print(k_coeff)
+def step_star(tn, hn, yn, func):
+    k = get_k(A, b_star, c, hn, tn, yn, func)
+    n_func = len(yn)
+    n_coeff = k.shape[1]
+    psi = np.zeros(n_func)
+    for i in range(n_coeff):
+        psi += b_star[i]*k[:, i]
+    return yn + hn*psi #works
