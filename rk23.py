@@ -4,19 +4,20 @@ A = np.array([[0.0, 0.0, 0.0],[1.0, 0.0, 0.0],[0.25,0.25,0.0]], np.double)
 b = np.array([0.5, 0.5, 0.0], np.double)
 b_star = np.array([1/6, 1/6, 2/3], np.double)
 c = np.array([0.0 ,1.0 ,0.5], np.double)
+#constants for the method, the butcher schema
 
-def get_k(A, c, hn, tn, yn, func):
+def get_k(A, c, hn, tn, yn, func): # we evaluate all the k params
     n_coeff = len(c)
     n_func = len(yn)
-    k = np.zeros([n_func, n_coeff])
+    k = np.zeros([n_func, n_coeff]) # bc y can be a vector, then k can be a matrix
     for i in range(n_coeff):
         Ki = np.zeros(n_func)
-        for j in range(0, i):
+        for j in range(0, i): # the formula
             Ki += A[i][j]*k[:, j]
         k[:, i] = func(tn+c[i]*hn, yn + hn*Ki)
     return k 
 
-def step(hn, yn, k, b):
+def step(hn, yn, k, b): # the formula with the psi step function
     n_func = len(yn)
     n_coeff = k.shape[1]
     psi = np.zeros(n_func)
@@ -29,7 +30,7 @@ def iterate(tn, hn, yn, eps_tol, func, lam):
     y_2 = step(hn, yn, k, b)
     y_3 = step(hn, yn, k, b_star)
     eps = np.max(np.absolute(y_2-y_3))
-    hn1 = hn*(lam*eps_tol/eps)**(1.0/3.0)
-    if eps < eps_tol:
+    hn1 = hn*(lam*eps_tol/eps)**(1.0/3.0) #h update formula
+    if eps < eps_tol: # if the error is small enough then its a success and we should iterate
         return hn1, y_3, True
-    return hn1, y_3, False
+    return hn1, y_3, False # the y3 is returned always, but should not be used unless succesful, idk maybe fix
