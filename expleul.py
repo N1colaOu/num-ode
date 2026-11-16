@@ -22,9 +22,13 @@ def explicit(f, y0, t0, t_end, h):
 
     t[0] = t0
     y[0] = y0
-
+   
     for n in range(step_number):
-     t[n + 1] = t[n] + h
-     y[n + 1] = y[n] + h * f(t[n], y[n])
+        # Truncate the step size if it overshoots t_end
+        if t[n] + h > t_end:
+            h = t_end - t[n]
+            
+        t[n + 1] = t[n] + h
+        y[n + 1] = y[n] + h * f(t[n], y[n])
 
     return t, y
