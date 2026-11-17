@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from Einschrittverfahren_solver import explicit_euler, rk4, rk23_adaptive
+from solvers import explicit_euler, rk4, rk23_adaptive
 
 mu = 0.012277471
 mu_hat = 1.0 - mu

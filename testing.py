@@ -1,7 +1,7 @@
 """Aufgabe a): y' = -10 y, y(0) = 1, t in [0, 1]. Analytisch: y(t) = exp(-10 t)."""
 import numpy as np
 import matplotlib.pyplot as plt
-from Einschrittverfahren_solver import explicit_euler, rk4, rk23_adaptive
+from solvers import explicit_euler, rk4, rk23_adaptive
 
 f = lambda y, t: -10.0 * y
 y0, t0, t_end = 1.0, 0.0, 1.0
