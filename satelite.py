@@ -55,16 +55,3 @@ def min_steps(method, target, n_start=100, n_max=5_000_000):
 for name, method in (("RK4", rk4), ("expl. Euler", explicit_euler)):
     n = min_steps(method, err_rk23)
     print(f"{name}: ca. {n} Schritte nötig (Fehler <= {err_rk23:.2e})")
-
-# Plots für je ein paar Schrittzahlen
-fig, ax = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True, sharey=True)
-for a, (name, method, ns) in zip(
-        ax, (("expl. Euler", explicit_euler, (1000, 10000, 100000)),
-             ("RK4", rk4, (200, 500, 1000)))):
-    for n in ns:
-        _, uu = method(f, u0, 0.0, T, n)
-        a.plot(uu[:, 0], uu[:, 1], label=f"n={n}")
-    a.plot(u[:, 0], u[:, 1], "k--", lw=0.8, label="RK23")
-    a.set_title(name); a.set_xlabel("x1"); a.legend()
-ax[0].set_ylabel("x2")
-plt.tight_layout(); plt.savefig("b_euler_rk4_orbit.png", dpi=150); plt.close()
