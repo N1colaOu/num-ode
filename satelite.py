@@ -1,64 +1,70 @@
-import rk23 as rk23
+"""Aufgabe b): Arenstorf-Orbit (eingeschränktes Dreikörperproblem)."""
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from Einschrittverfahren_solver import explicit_euler, rk4, rk23_adaptive
 
-miu = 0.012277471
+mu = 0.012277471
+mu_hat = 1.0 - mu
 T = 17.06521656015796
-miu_hat = 1 - miu
-
-# u, v, z, k
-# u = x1_dot , v = x1, z = x2_dot, k = x2
-# => y = (v, u, k, z), y_dot = f(t, y)
-v0 = 0.994
-k0 = 0.0
-u0 = 0.0
-z0 = -2.001585106376082
-y_curr_rk23 = np.array([v0, u0, k0, z0])
-t_curr_rk23 = 0.0
-eps_tol = 0.001
-lam = 0.5
-h_curr_rk23 = 0.1
-
-def N1(v, k):
-    return ((v+miu)**2 + k**2)**1.5
-def N2(v, k):
-    return ((v-miu_hat)**2 + k**2)**1.5
-
-def f(t, y): #the whole system right hand side
-    v, u, k, z = y
-    v_dot = u
-    u_dot = v + 2*z - miu_hat*(v+miu)/N1(v, k) - miu*(v-miu_hat)/N2(v, k)
-    k_dot = z
-    z_dot = k - 2*u - miu_hat*k/N1(v, k) - miu*k/N2(v, k)
-    return np.array([v_dot, u_dot, k_dot, z_dot])
-
-y_data_rk23 = [y_curr_rk23.copy()]
-t_data_rk23 = [t_curr_rk23]
-h_data_rk23 = [h_curr_rk23]
-while t_curr_rk23 < T: #same while loop as the other file
-    if t_curr_rk23 + h_curr_rk23 > T:
-        h_curr_rk23 = T - t_curr_rk23
-    h_new, y_new, success = rk23.iterate(t_curr_rk23, h_curr_rk23, y_curr_rk23, eps_tol, f, lam)
-    if success:
-        y_curr_rk23 = y_new
-        t_curr_rk23 += h_curr_rk23
-        y_data_rk23.append(y_curr_rk23.copy())
-        t_data_rk23.append(t_curr_rk23)
-        h_data_rk23.append(h_curr_rk23)
-    h_curr_rk23 = h_new
 
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+def f(u, t):
+    """System 1. Ordnung, u = (x1, x2, v1, v2) mit v = x'."""
+    x1, x2, v1, v2 = u
+    N1 = ((x1 + mu) ** 2 + x2 ** 2) ** 1.5
+    N2 = ((x1 - mu_hat) ** 2 + x2 ** 2) ** 1.5
+    a1 = x1 + 2 * v2 - mu_hat * (x1 + mu) / N1 - mu * (x1 - mu_hat) / N2
+    a2 = x2 - 2 * v1 - mu_hat * x2 / N1 - mu * x2 / N2
+    return np.array([v1, v2, a1, a2])
 
-ax1.plot([state[0] for state in y_data_rk23], [state[2] for state in y_data_rk23], label='RK23 (adaptive)')
-ax1.set_xlabel('x1')
-ax1.set_ylabel('x2')
-ax1.legend()
 
-ax2.plot(range(len(h_data_rk23)), h_data_rk23, label='time step size')
-ax2.set_xlabel('step number')
-ax2.set_ylabel('dt')
-ax2.legend()
+u0 = np.array([0.994, 0.0, 0.0, -2.001585106376082])
 
-plt.tight_layout()
-plt.show()
+# --- RK2(3) adaptiv ---
+t, u, h = rk23_adaptive(f, u0, 0.0, T, h0=0.1, tol=1e-3, safety=0.5)
+n_rk23 = len(h)
+err_rk23 = np.max(np.abs(u[-1, :2] - u0[:2]))
+print(f"RK23: {n_rk23} Schritte, |x(T)-x(0)|_inf = {err_rk23:.3e}")
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4.5))
+ax[0].plot(u[:, 0], u[:, 1], label="RK23 (adaptive)")
+ax[0].set_xlabel("x1"); ax[0].set_ylabel("x2"); ax[0].legend()
+ax[1].plot(h, label="time step size")
+ax[1].set_xlabel("step number"); ax[1].set_ylabel("dt"); ax[1].legend()
+plt.tight_layout(); plt.savefig("b_rk23_orbit.png", dpi=150); plt.close()
+
+
+# --- Wie viele Schritte brauchen RK4 / Euler für vergleichbare Genauigkeit? ---
+# Maß: Schließungsfehler der Bahn |x(T) - x(0)|_inf (die Bahn ist periodisch).
+def closure_error(method, n):
+    _, uu = method(f, u0, 0.0, T, n)
+    return np.max(np.abs(uu[-1, :2] - u0[:2]))
+
+
+def min_steps(method, target, n_start=100, n_max=5_000_000):
+    n = n_start
+    while n <= n_max:
+        if closure_error(method, n) <= target:
+            return n
+        n *= 2
+    return None
+
+
+for name, method in (("RK4", rk4), ("expl. Euler", explicit_euler)):
+    n = min_steps(method, err_rk23)
+    print(f"{name}: ca. {n} Schritte nötig (Fehler <= {err_rk23:.2e})")
+
+# Plots für je ein paar Schrittzahlen
+fig, ax = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True, sharey=True)
+for a, (name, method, ns) in zip(
+        ax, (("expl. Euler", explicit_euler, (1000, 10000, 100000)),
+             ("RK4", rk4, (200, 500, 1000)))):
+    for n in ns:
+        _, uu = method(f, u0, 0.0, T, n)
+        a.plot(uu[:, 0], uu[:, 1], label=f"n={n}")
+    a.plot(u[:, 0], u[:, 1], "k--", lw=0.8, label="RK23")
+    a.set_title(name); a.set_xlabel("x1"); a.legend()
+ax[0].set_ylabel("x2")
+plt.tight_layout(); plt.savefig("b_euler_rk4_orbit.png", dpi=150); plt.close()

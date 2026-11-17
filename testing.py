@@ -1,40 +1,37 @@
-import rk23 as rk23
+"""Aufgabe a): y' = -10 y, y(0) = 1, t in [0, 1]. Analytisch: y(t) = exp(-10 t)."""
 import numpy as np
 import matplotlib.pyplot as plt
+from Einschrittverfahren_solver import explicit_euler, rk4, rk23_adaptive
 
-t_curr_rk23 = 0.0
-t_end = 1.0
-y_curr_rk23 = [1.0] #!!!1 has to be initialized as vector, as to function, bc all the code is for vectors
-h_curr_rk23 = 0.1
-eps_tol = 0.3
-lam = 0.5
+f = lambda y, t: -10.0 * y
+y0, t0, t_end = 1.0, 0.0, 1.0
+exact = lambda t: np.exp(-10.0 * t)
+t_fine = np.linspace(t0, t_end, 1000)
 
-def f(t, y):
-    return -10*y
+#plot 1/2: of explicit euler and rk4 for  h = 0.1 and h = 0.01
+for h in (0.1, 0.01):
+    n = int(round((t_end -t0) / h))
+    t_e, y_e = explicit_euler(f, y0, t0, t_end, n)
+    t_r, y_r = rk4(f, y0, t0, t_end, n)
+    plt.figure(figsize=(6, 4.5))
+    plt.plot(t_e, y_e[:, 0], "o-", ms=4, label="expl. Euler")
+    plt.plot(t_r, y_r[:, 0], "o-", ms=4, label="RK4")
+    plt.plot(t_fine, exact(t_fine), "k--", label="analytical")
+    plt.title(f"Task 1, h = {h}")
+    plt.legend(); plt.tight_layout()
+    plt.savefig(f"a_euler_rk4_h{h}.png", dpi=150)
 
-y_data_rk23 = [y_curr_rk23] #plotting data arrays
-t_data_rk23 = [t_curr_rk23]
-while t_curr_rk23 < t_end:
-    if t_curr_rk23 + h_curr_rk23 > t_end: #if we are about to overshoot, we correct the step so its fits perfect
-        h_curr_rk23 = t_end - t_curr_rk23
-    h_new, y_new, success = rk23.iterate(t_curr_rk23, h_curr_rk23, y_curr_rk23, eps_tol, f, lam) #get the new values
-    if success: # if we made the step we update
-        y_curr_rk23 = y_new
-        t_curr_rk23 += h_curr_rk23
-        y_data_rk23.append(y_curr_rk23)
-        t_data_rk23.append(t_curr_rk23)
-    h_curr_rk23 = h_new # the step has to always be updated no matter the success
+#plot 3/4: adaptive rk23 for etol = 0.3, 0.01 and lambda = 0.5
+for tol in (0.3, 0.01):
+    t_a, y_a, h_a = rk23_adaptive(f, y0, t0, t_end, h0=0.1, tol=tol, safety=0.5)
+    plt.figure(figsize=(6, 4.5))
+    plt.plot(t_a, y_a[:, 0], "o-", ms=4, label="adaptive RK23")
+    plt.plot(t_fine, exact(t_fine), "k--", label="analytical")
+    plt.title(f"Task 1, adaptive, tol={tol}, safety= 0.5")
+    plt.legend(); plt.tight_layout()
+    plt.savefig(f"a_rk23_tol{tol}.png", dpi=150)
 
-
-t_anal = np.linspace(0, 1, 100)
-y_anal = np.exp(-10 * t_anal)
-
-plt.figure(figsize=(8, 6)) 
-plt.plot(t_data_rk23, y_data_rk23, marker='o', linestyle='-', label='RK23 (adaptive)')
-plt.plot(t_anal, y_anal, 'k--', label='analytical')
-plt.title('Task 1, adaptive, tol=0.3, safety=0.5')
-plt.legend()
 plt.show()
 
 
-
+    
