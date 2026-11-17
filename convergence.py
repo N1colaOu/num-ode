@@ -25,11 +25,12 @@ err_euler = [linf_error(*explicit_euler(f, y0, t0, tend, n)) for n in ns]
 err_rk4 = [linf_error(*rk4(f, y0, t0, tend, n)) for n in ns]
 
 # --- adaptives RK2(3) für verschiedene Toleranzen ---
-tols = np.logspace(-1, -9, 9)
+tols = np.logspace(-1, -9, 9) # die verschiedene Toleranzen 1e-1 -> 1e-9
 n_ad, err_ad = [], []
 for tol in tols:
-    t, y, h = rk23_adaptive(f, y0, t0, tend, h0=0.1, tol=tol, safety=0.5)
-    n_ad.append(len(h)); err_ad.append(linf_error(t, y))
+    t, y, h = rk23_adaptive(f, y0, t0, tend, h0=0.1, tol=tol, lam=0.5)
+    n_ad.append(len(h))
+    err_ad.append(linf_error(t, y))
 n_ad = np.array(n_ad)
 
 # Referenzgeraden (durch den ersten Punkt der jeweiligen Kurve gelegt)

@@ -22,8 +22,8 @@ def f(u, t):
 
 u0 = np.array([0.994, 0.0, 0.0, -2.001585106376082])
 
-# --- RK2(3) adaptiv ---
-t, u, h = rk23_adaptive(f, u0, 0.0, T, h0=0.1, tol=1e-3, safety=0.5)
+# --- RK23 adaptiv ---
+t, u, h = rk23_adaptive(f, u0, 0.0, T, h0=0.1, tol=1e-3, lam=0.5)
 n_rk23 = len(h)
 err_rk23 = np.max(np.abs(u[-1, :2] - u0[:2]))
 print(f"RK23: {n_rk23} Schritte, |x(T)-x(0)|_inf = {err_rk23:.3e}")

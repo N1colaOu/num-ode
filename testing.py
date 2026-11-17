@@ -23,7 +23,7 @@ for h in (0.1, 0.01):
 
 #plot 3/4: adaptive rk23 for etol = 0.3, 0.01 and lambda = 0.5
 for tol in (0.3, 0.01):
-    t_a, y_a, h_a = rk23_adaptive(f, y0, t0, t_end, h0=0.1, tol=tol, safety=0.5)
+    t_a, y_a, h_a = rk23_adaptive(f, y0, t0, t_end, h0=0.1, tol=tol, lam=0.5)
     plt.figure(figsize=(6, 4.5))
     plt.plot(t_a, y_a[:, 0], "o-", ms=4, label="adaptive RK23")
     plt.plot(t_fine, exact(t_fine), "k--", label="analytical")
