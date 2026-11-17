@@ -34,14 +34,7 @@ def rk4(f, y0, t0, tend, n_steps):
     return t, y
 
 
-def rk23_adaptive(f, y0, t0, tend, h0, tol, safety=0.5, max_steps=10**6):
-    """Adaptives RK2(3) mit Schema (4).
-
-    Fortgeschrieben wird mit dem Verfahren 3. Ordnung (b = 1/6, 1/6, 4/6),
-    das eingebettete Verfahren 2. Ordnung (b_hat = 1/2, 1/2, 0) dient der
-    Fehlerschätzung eps = ||y_{n+1} - y_hat_{n+1}||_inf.
-    Rückgabe: (t, y, h) mit den Schrittweiten h[n] = t[n+1] - t[n].
-    """
+def rk23_adaptive(f, y0, t0, tend, h0, tol, lam=0.5, max_steps=10**6):
     c = np.array([0.0, 1.0, 0.5])
     A = np.array([[0.0, 0.0, 0.0],
                   [1.0, 0.0, 0.0],
@@ -53,10 +46,8 @@ def rk23_adaptive(f, y0, t0, tend, h0, tol, safety=0.5, max_steps=10**6):
     t_cur = float(t0)
     h = float(h0)
     ts, ys, hs = [t_cur], [y_cur.copy()], []
-    tiny = 1e-14 * max(1.0, abs(tend))
-
     steps = 0
-    while tend - t_cur > tiny:
+    while tend > t_cur:
         h = min(h, tend - t_cur)             # genau auf tend landen
         while True:                          # Schritt wiederholen bis eps < tol
             k = np.zeros((3, y_cur.size))
@@ -66,14 +57,14 @@ def rk23_adaptive(f, y0, t0, tend, h0, tol, safety=0.5, max_steps=10**6):
             y_hat = y_cur + h * (b_hat @ k)
             eps = np.max(np.abs(y_new - y_hat))
             # Vorschlag für die nächste Schrittweite (eps=0 -> maximal vergrößern)
-            factor = (safety * tol / eps) ** (1 / 3) if eps > 0 else 10.0
+            factor = (lam * tol / eps) ** (1 / 3) if eps > 0 else 10.0
             if eps < tol:
                 break
             h *= factor                      # Schritt abgelehnt, h verkleinern
         t_cur += h
         y_cur = y_new
         ts.append(t_cur); ys.append(y_cur.copy()); hs.append(h)
-        h *= factor                          # h_{n+1} = h * (lambda*tol/eps)^(1/3)
+        h *= factor                         
         steps += 1
         if steps > max_steps:
             raise RuntimeError("zu viele Schritte")
